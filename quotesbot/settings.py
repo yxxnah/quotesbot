@@ -17,6 +17,9 @@ NEWSPIDER_MODULE = 'quotesbot.spiders'
 # Pipeline 설정
 ITEM_PIPELINES = {'quotesbot.pipelines.MongoDBPipeline':300}
 
+# URL Encoding 이슈
+DOWNLOADER_MIDDLEWARES = {'quotesbot.middlewares.MyCustomDownloaderMiddleware': 900}
+
 # Mongodb 관련 설정
 MONGO_URI = 'mongodb://localhost:27017'
 MONGO_DB = 'scrap'
