@@ -14,6 +14,12 @@ BOT_NAME = 'quotesbot'
 SPIDER_MODULES = ['quotesbot.spiders']
 NEWSPIDER_MODULE = 'quotesbot.spiders'
 
+# Pipeline 설정
+ITEM_PIPELINES = {'quotesbot.pipelines.MongoDBPipeline':300}
+
+# Mongodb 관련 설정
+MONGO_URI = 'mongodb://localhost:27017'
+MONGO_DB = 'scrap'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'quotesbot (+http://www.yourdomain.com)'
