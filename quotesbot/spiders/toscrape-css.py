@@ -3,6 +3,7 @@ import scrapy
 import urllib.parse
 from urllib.parse import urljoin
 from urllib.parse import unquote
+from quotesbot.items import QuotesbotItem
 
 class ToScrapeCSSSpider(scrapy.Spider):
     name = "toscrape-css"
@@ -10,25 +11,31 @@ class ToScrapeCSSSpider(scrapy.Spider):
         'http://quotes.toscrape.com/',
     ]
 
-    # author 정보 크롤링
-    def parse_author(self, response):  
-        yield {
-            'name': response.css("h3.author-title::text").extract(),
-            'born': response.css("span.author-born-date::text").extract() + response.css("span.author-born-location::text").extract(),
-            'description': response.css("div.author-description::text").extract()
-        }
-
     def parse(self, response):
         for quote in response.css("div.quote"):
-            author_page_url = '/author/' + quote.css("small.author::text").extract_first()
-            test = scrapy.Request(urllib.parse.unquote(response.urljoin(author_page_url)), callback=self.parse_author)
+            author_page_url = '/author/' + quote.css("small.author::text").get()
 
-            yield {
-                'text': quote.css("span.text::text").extract_first(),
-                'author': scrapy.Request(urllib.parse.unquote(response.urljoin(author_page_url)), callback=self.parse_author),
-                'tags': quote.css("div.tags > a.tag::text").extract()
-            }
+            # 항목 정의
+            item = QuotesbotItem()
+            item['text'] = quote.css("span.text::text").get().strip()
+            item['tags'] = quote.css("div.tags > a.tag::text").getall()
 
-        next_page_url = response.css("li.next > a::attr(href)").extract_first()
+            # 콜백 요청
+            yield scrapy.Request(urllib.parse.unquote(response.urljoin(author_page_url)), meta={'item':item}, callback=self.parse_author)
+
+        next_page_url = response.css("li.next > a::attr(href)").get().strip()
         if next_page_url is not None:
             yield scrapy.Request(response.urljoin(next_page_url))
+
+    # author 정보 크롤링
+    def parse_author(self, response):  
+        author = {
+            'name': response.css("h3.author-title::text").get().strip(),
+            'born': response.css("span.author-born-date::text").get().strip() + response.css("span.author-born-location::text").get().strip(),
+            'description': response.css("div.author-description::text").get().strip()
+        }
+
+        item = response.request.meta['item']
+        item['author'] = author
+
+        yield item
